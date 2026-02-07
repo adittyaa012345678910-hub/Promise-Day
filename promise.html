@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promise Day 💌</title>
+
+<style>
+
+/* ===== BASE ===== */
+body{
+  margin:0;
+  height:100vh;
+  background: radial-gradient(circle at center,#000000 0%,#0f0e0e 100%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:Georgia,serif;
+  overflow:hidden;
+  color:white;
+}
+
+/* ===== START EMOJI ===== */
+.start{
+  font-size:64px;
+  cursor:pointer;
+  z-index:5;
+  transition:.2s;
+}
+.start:active{ transform:scale(.9); }
+
+/* ===== LETTER BOX ===== */
+.letter-box{
+  text-align:center;
+  display:none;
+  z-index:5;
+}
+.letter{
+  width:min(88vw,420px);
+  cursor:pointer;
+  transition:.3s;
+  box-shadow:0 25px 50px rgba(0, 0, 0, 0.6);
+}
+.letter:active{ transform:scale(.98); }
+
+/* ===== FINAL TEXT ===== */
+.final-text{
+  margin-top:18px;
+  font-size:18px;
+  opacity:0;
+  transform:translateY(15px);
+  transition:.8s;
+}
+.final-text.show{
+  opacity:1;
+  transform:translateY(0);
+}
+
+/* ===== HEART BURST ===== */
+.heart{
+  position:fixed;
+  font-size:20px;
+  animation:pop 1.6s ease forwards;
+  z-index:6;
+}
+@keyframes pop{
+  0%{transform:scale(.5) translateY(0);opacity:0;}
+  30%{opacity:1;}
+  100%{transform:scale(1.5) translateY(-140px);opacity:0;}
+}
+
+/* ===== FIREFLIES ===== */
+.firefly{
+  position:fixed;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:1;
+
+  background: radial-gradient(circle,
+    #d8ff7a 0%,
+    #6aff00 45%,
+    rgba(106,255,0,.25) 70%,
+    transparent 100%);
+
+  box-shadow:
+    0 0 8px #6aff00,
+    0 0 18px rgba(106,255,0,.9),
+    0 0 32px rgba(106,255,0,.6);
+
+  animation: drift linear infinite, glow 2.6s ease-in-out infinite;
+}
+
+/* floating diagonal movement */
+@keyframes drift{
+  0%{ transform:translate(0,0); }
+  20%{ transform:translate(40px,-60px); }
+  40%{ transform:translate(-30px,-120px); }
+  60%{ transform:translate(50px,-180px); }
+  80%{ transform:translate(-20px,-240px); }
+  100%{ transform:translate(30px,-320px); }
+}
+
+/* glowing pulse */
+@keyframes glow{
+  0%,100%{ opacity:.35; }
+  50%{ opacity:1; }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="start" id="start">💌</div>
+
+<div class="letter-box" id="box">
+  <img id="letter" class="letter" src="stage1.jpg">
+  <div id="finalText" class="final-text">
+    Some promises are not spoken…<br>
+    they are lived. 🤍
+  </div>
+</div>
+
+<audio id="paperSound" src="paper.mp3"></audio>
+
+<script>
+
+const start = document.getElementById("start");
+const box = document.getElementById("box");
+const letter = document.getElementById("letter");
+const finalText = document.getElementById("finalText");
+const sound = document.getElementById("paperSound");
+
+let stage = 1;
+
+/* ===== START CLICK ===== */
+start.addEventListener("click",()=>{
+
+  for(let i=0;i<18;i++){
+    const h=document.createElement("div");
+    h.className="heart";
+    h.innerHTML="❤";
+    h.style.left=Math.random()*100+"vw";
+    h.style.top=Math.random()*100+"vh";
+    document.body.appendChild(h);
+    setTimeout(()=>h.remove(),1600);
+  }
+
+  start.style.display="none";
+  box.style.display="block";
+});
+
+/* ===== LETTER STAGES ===== */
+letter.addEventListener("click",()=>{
+
+  if(stage===1) letter.src="stage2.jpg";
+  else if(stage===2) letter.src="stage3.jpg";
+  else if(stage===3){
+    letter.src="stage4.jpg";
+    setTimeout(()=>finalText.classList.add("show"),600);
+  }
+  else return;
+
+  if(sound){
+    sound.currentTime=0;
+    sound.play().catch(()=>{});
+  }
+
+  letter.style.opacity=0;
+  setTimeout(()=>letter.style.opacity=1,140);
+
+  stage++;
+});
+
+/* ===== FIREFLIES CREATE ===== */
+const fireflies = [];
+
+for(let i=0;i<45;i++){
+  const f=document.createElement("div");
+  f.className="firefly";
+
+  const x=Math.random()*window.innerWidth;
+  const y=Math.random()*window.innerHeight;
+
+  f.style.left=x+"px";
+  f.style.top=y+"px";
+
+  f.dataset.x=x;
+  f.dataset.y=y;
+
+  f.style.animationDuration=(18+Math.random()*18)+"s";
+  f.style.animationDelay=Math.random()*12+"s";
+
+  document.body.appendChild(f);
+  fireflies.push(f);
+}
+
+/* ===== CURSOR REPEL EFFECT ===== */
+document.addEventListener("mousemove",(e)=>{
+
+  const mx=e.clientX;
+  const my=e.clientY;
+
+  fireflies.forEach(f=>{
+
+    let fx=parseFloat(f.dataset.x);
+    let fy=parseFloat(f.dataset.y);
+
+    const dx=fx-mx;
+    const dy=fy-my;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+
+    const repelRadius=120;
+
+    if(dist<repelRadius){
+      const angle=Math.atan2(dy,dx);
+      const force=(repelRadius-dist)/repelRadius;
+
+      fx+=Math.cos(angle)*force*18;
+      fy+=Math.sin(angle)*force*18;
+
+      f.style.left=fx+"px";
+      f.style.top=fy+"px";
+
+      f.dataset.x=fx;
+      f.dataset.y=fy;
+    }
+  });
+});
+
+</script>
+
+</body>
+</html>
